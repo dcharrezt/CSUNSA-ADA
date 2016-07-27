@@ -5,8 +5,6 @@ typedef int II;
 
 class Point
 {
-friend class Delaunay;
-
 public:
     II x;
     II y;

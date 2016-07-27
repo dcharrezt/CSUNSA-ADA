@@ -24,6 +24,7 @@ EdgePair::EdgePair(){
 }
 
 EdgePair::EdgePair(QuadEdge *left, QuadEdge *right){
+
     this->left = left;
     this->right = right;
 }
@@ -53,8 +54,9 @@ public:
 };
 
 QuadEdge* Delaunay::MakeQuadEdge(Point* org, Point* dst) {
-    QuadEdge* q;
+    QuadEdge* q = new QuadEdge();
     q->MakeEdge(org, 0, dst, 0);
+
     return q;
 }
 
@@ -76,10 +78,11 @@ Point* Delaunay::Dest(QuadEdge* e){
 }
 
 QuadEdge* Delaunay::Connect(QuadEdge* a, QuadEdge* b) {
-    QuadEdge* e = MakeQuadEdge(a->Sym()->data, b->data);
-    e->splice(a->Lnext());
-    e->Sym()->splice(b);
-    return e;
+
+    QuadEdge* e = MakeQuadEdge(a->group->e[0]->Sym()->data, b->group->e[0]->data);
+    e->group->e[0]->splice(a->Lnext());
+    e->group->e[0]->Sym()->splice(b);
+    return e->group->e[0];
 }
 
 void Delaunay::DeleteEdge(QuadEdge* e) {
@@ -89,7 +92,6 @@ void Delaunay::DeleteEdge(QuadEdge* e) {
 
 //-------------------------------------------------------------------------
 // Divide and conquer algorithm for computing the Delaunay diagram.
-
 QuadEdge* Delaunay::process(points p) {
     points sites = preprocess(p);
     EdgePair* pair = compute(sites);
@@ -109,32 +111,39 @@ points Delaunay::preprocess(points point) {
 // rightmost vertex, respectively.
 EdgePair* Delaunay::compute(points S) {
     if (S.size() == 2) {
-        QuadEdge* a = MakeQuadEdge(S[0], S[1]);
-        return new EdgePair(a, a->Sym());
+        QuadEdge *a = MakeQuadEdge(S[0], S[1]);
+        EdgePair *temp = new EdgePair(a, a->Sym());
+
+        return  temp;
     }
     else if (S.size() == 3) {
         QuadEdge *a, *b;
         a = MakeQuadEdge(S[0], S[1]);
         b = MakeQuadEdge(S[1], S[2]);
-        cout << "a" << a->r << "    " <<a->data->x <<"\t" << a->data->y<< endl;
-        cout << "b" << b->r << "    " <<b->data->x <<"\t" << b->data->y<< endl;
         a->Sym()->splice(b);
-        cout << "asd" << endl;
+        cout << "lets clse " << endl;
         // Close the triangle.
         QuadEdge* c;
         Point* t;
         if (t->isCCW(S[0], S[1], S[2])) {
             c = Connect(b, a);
-            return new EdgePair(a, b->Sym());
+            EdgePair *temp = new EdgePair(a, b->Sym());
+            return temp;
         }
         else if (t->isCCW(S[0], S[2], S[1])) {
             c = Connect(b, a);
+            EdgePair *temp = new EdgePair(c->Sym(), c);
             return new EdgePair(c->Sym(), c);
         }
         else  // the three points are collinear
-            return new EdgePair(a, b->Sym());
+        {
+            EdgePair *temp = new EdgePair(a, b->Sym());
+            return temp;
+        }
     }
 
+
+    cout << " hmm 0 " << endl;
     // At this point, we have more that three points, so divide and conquer.
     EdgePair* Lpair = compute(subVector(S, 0, S.size()/2));
     EdgePair* Rpair = compute(subVector(S, S.size()/2, S.size()));
@@ -198,14 +207,18 @@ EdgePair* Delaunay::compute(points S) {
             base1 = Connect(base1->Sym(), lcand->Sym());
     }
 
+    cout << "got to the end " << endl;
     return new EdgePair(ldo, rdo);
 }
 
-// Return the subarray with indices [start, end).
+// Return the subvector with indices [start, end).
 points Delaunay::subVector(points p, int start, int end) {
-    points p1;
 
-    return p1;
+    points::const_iterator first = p.begin() + start;
+    points::const_iterator last = p.begin() + end;
+    points newVec(first, last);
+
+    return newVec;
 }
 
 
